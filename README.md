@@ -1,5 +1,5 @@
 # Gondolin 
-An delightfully-opinionated [Elvish](https://elv.sh) configuration.
+A delightfully-opinionated [Elvish](https://elv.sh) configuration.
 
 Currently it shows:
 * Current working directory
@@ -9,14 +9,14 @@ Currently it shows:
   * `!` — unstaged changes;
   * `»` — renamed files;
   * `✘` — deleted files;
-  * `$` — stashed changes _**WIP**_;
+  * `$` — stashed changes [WIP];
   * `§` — unmerged changes;
   * `⇡` — ahead of remote branch;
   * `⇣` — behind of remote branch;
   * `⇕` — diverged changes.
 * Current Git SHA
 * Colorized time since last commit
-* A red marker, `✗`, if last command exits with non-zero code.
+* A red marker (`✗`) if last command exits with non-zero code.
 
 ## Installation
 ### Prerequisites 
