@@ -10,7 +10,7 @@ use re
 # -----------------------------------------------------------------------------
 
 # case-insensitive smart completion
-edit:completion:matcher[''] = [p]{ edit:match-prefix &smart-case $p }
+# edit:completion:matcher[''] = [p]{ edit:match-prefix &smart-case $p }
 
 # -----------------------------------------------------------------------------
 # Utility Functions
@@ -106,17 +106,16 @@ fn git-status {
   index = (joins ' ' [(put (git status --porcelain -b 2> /dev/null))])
   status = ''
 
-  # untracked
   if (re:match '\?\?\s+' $index) {
     status = '&git-prompt-untracked'$status
   }
-  # added
+
   if (re:match 'A\s' $index) {
     status = '&git-prompt-added'$status
   } elif (re:match '\sM\s\s' $index) {
     status = '&git-prompt-added'$status
   }
-  # modified
+
   if (re:match '\sM\s\w' $index) {
     status = '&git-prompt-modified'$status
   } elif (re:match '\sMM\s' $index) {
@@ -126,11 +125,11 @@ fn git-status {
   } elif (re:match '\sT\s' $index) {
     status = '&git-prompt-modified'$status
   }
-  # renamed
+
   if (re:match '\sR\s' $index) {
     status = '&git-prompt-renamed'$status
   }
-  # deleted
+
   if (re:match '\sD\s' $index) {
     status = '&git-prompt-deleted'$status
   } elif (re:match '\sD\s\s' $index) {
@@ -138,19 +137,19 @@ fn git-status {
   } elif (re:match '\sAD\s' $index) {
     status = '&git-prompt-deleted'$status
   }
-  # unmerged
+
   if (re:match '\sUU\s' $index) {
     status = '&git-prompt-unmerged'$status
   }
-  # ahead
+
   if (re:match '##\s.*ahead' $index) {
     status = '&git-prompt-ahead'$status
   }
-  # behind
+
   if (re:match '##\s.*behind' $index) {
     status = '&git-prompt-behind'$status
   }
-  # diverged
+
   if (re:match '##\s.*diverged' $index) {
     status = '&git-prompt-diverged'$status
   }
@@ -253,27 +252,45 @@ fn git-time-since-commit {
 # Prompt Configuration
 # -----------------------------------------------------------------------------
 
+prompt-pwd-dir-length = 1
+
+fn prompt-pwd {
+  tmp = (tilde-abbr $pwd)
+  if (== $prompt-pwd-dir-length 0) {
+    put $tmp
+  } else {
+    re:replace '(\.?[^/]{'$prompt-pwd-dir-length'})[^/]*/' '$1/' $tmp
+  }
+}
+
 edit:prompt = {
-  edit:styled (tilde-abbr $pwd) lightblue
+  # the current working directory
+  edit:styled (prompt-pwd) lightblue
 
   put ' '
 
+  # only execute if the current directory is a git repository
   if (not (has_failed { branch })) {
+    # current branch indicator
     edit:styled '⎇ ' green
     edit:styled (branch) green
 
+    # current branch status readout
     status-string = (echo (git-status))
-
+    # only print to readline if there is a status
     if (> (count $status-string) 0) {
       put (git-status)
     }
 
     put ' '
 
+    # print first 8 chars of current commit hash
     edit:styled (put (commit_id)[:8]) white
 
     put ' '
 
+    # display time since the last commit was made in the
+    # current working directory
     put (git-time-since-commit)
   }
 
