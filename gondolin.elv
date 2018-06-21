@@ -10,7 +10,7 @@ use re
 # -----------------------------------------------------------------------------
 
 # case-insensitive smart completion
-edit:-matcher[''] = [p]{ edit:match-prefix &smart-case $p }
+edit:completion:matcher[''] = [p]{ edit:match-prefix &smart-case $p }
 
 # -----------------------------------------------------------------------------
 # Utility Functions
