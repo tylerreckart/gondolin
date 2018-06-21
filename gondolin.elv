@@ -50,6 +50,10 @@ fn map [f @rest]{
   put $res
 }
 
+fn even [int]{
+  put ($int % 2)
+}
+
 # git functions
 fn branch {
   put (git rev-parse --abbrev-ref HEAD)
@@ -130,19 +134,61 @@ fn git-status {
     status = '&git-prompt-diverged'$status
   }
 
-  last-status [(drop 1 [(re:split '[&]' $status)])]
+  last-status = [(drop 1 [(re:split '[&]' $status)])]
 
   status-glyphs = [
-    git-prompt-untracked= '?'
-    git-prompt-added=     '!'
-    git-prompt-modified=  '+'
-    git-prompt-renamed=   '»'
-    git-prompt-deleted=   '✘'
-    git-prompt-unmerged=  '§'
-    git-prompt-ahead=     '⇡'
-    git-prompt-behind=    '⇣'
-    git-prompt-diverged=  '⇕'
+    &git-prompt-untracked= '?'
+    &git-prompt-added=     '!'
+    &git-prompt-modified=  '+'
+    &git-prompt-renamed=   '»'
+    &git-prompt-deleted=   '✘'
+    &git-prompt-unmerged=  '§'
+    &git-prompt-ahead=     '⇡'
+    &git-prompt-behind=    '⇣'
+    &git-prompt-diverged=  '⇕'
   ]
+
+  results = []
+
+  for x $last-status {
+    glyph = $status-glyphs[$x]
+
+    if (re:match 'git-prompt-untracked' $x) {
+      edit:styled ' '$glyph magenta
+    }
+
+    if (re:match 'git-prompt-added' $x) {
+      edit:styled ' '$glyph lightblue
+    }
+
+    if (re:match 'git-prompt-modified' $x) {
+      edit:styled ' '$glyph yellow
+    }
+
+    if (re:match 'git-prompt-renamed' $x) {
+      edit:styled ' '$glyph green
+    }
+
+    if (re:match 'git-prompt-deleted' $x) {
+      edit:styled ' '$glyph red
+    }
+
+    if (re:match 'git-prompt-unmerged' $x) {
+      edit:styled ' '$glyph lightblue
+    }
+
+    if (re:match 'git-prompt-ahead' $x) {
+      edit:styled ' '$glyph blue
+    }
+
+    if (re:match 'git-prompt-behind' $x) {
+      edit:styled ' '$glyph red
+    }
+
+    if (re:match 'git-prompt-diverged' $x) {
+      edit:styled $glyph yellow
+    }
+  }
 }
 
 fn git-time-since-commit {
@@ -196,6 +242,14 @@ edit:prompt = {
     edit:styled (put (commit_id)[:8]) white
     put ' '
     put (git-time-since-commit)
+
+    current-status = (echo (git-status))
+
+    if (> (count $current-status) 0) {
+      put ' ['
+      put (git-status)
+      put ']'
+    }
   }
 
   put "\n"
