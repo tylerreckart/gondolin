@@ -1,6 +1,8 @@
 # Gondolin 
 A delightfully-opinionated [Elvish](https://elv.sh) configuration.
 
+![](assets/gondolin_screenshot.png)
+
 Currently it shows:
 * Current working directory
 * Current Git branch and rich repo status in prompt readline. 
