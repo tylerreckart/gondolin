@@ -10,18 +10,6 @@ fn has_failed [p]{
   eq (bool ?(null_out $p)) $false
 }
 
-fn to_list [@rest]{
-  arr = []
-
-  if (not (eq (count $rest) 1)) {
-    @arr = (all)
-  } else {
-    arr = $rest[0]
-  }
-
-  put $arr
-}
-
 fn floor [x]{
   @r = (splits . $x)
   put $r[0]
@@ -29,6 +17,28 @@ fn floor [x]{
 
 fn now {
   put (date +%s)
+}
+
+fn optional_in [rest]{
+  arr = []
+
+  if (not (eq (count $rest) 1)) {
+    arr = (all)
+  } else {
+    arr = $rest[0]
+  }
+
+  put $arr
+}
+
+fn map [f @rest]{
+  a = (optional_in $rest)
+
+  @res = (for x $a {
+    put ($f $x)
+  })
+
+  put $res
 }
 
 # git functions
@@ -62,7 +72,6 @@ fn status {
 
 fn git-status {
   index = (joins ' ' [(put (git status --porcelain -b 2> /dev/null))])
-  results = []
   status = ''
 
   # untracked
@@ -112,7 +121,19 @@ fn git-status {
     status = '&git-prompt-diverged'$status
   }
 
-  put $status
+  last-status [(drop 1 [(re:split '[&]' $status)])]
+
+  status-glyphs = [
+    git-prompt-untracked= '?'
+    git-prompt-added=     '!'
+    git-prompt-modified=  '+'
+    git-prompt-renamed=   '»'
+    git-prompt-deleted=   '✘'
+    git-prompt-unmerged=  '§'
+    git-prompt-ahead=     '⇡'
+    git-prompt-behind=    '⇣'
+    git-prompt-diverged=  '⇕'
+  ]
 }
 
 fn git-time-since-commit {
