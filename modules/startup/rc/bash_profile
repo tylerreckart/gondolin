@@ -1,0 +1,11 @@
+shopt -q login_shell || return  # Login shell
+
+export ELVISH_IS_LOGIN_SHELL=true
+
+if [ -f "$HOME/.bash_profile.local" ] ; then
+  source "$HOME/.bash_profile.local"
+fi
+
+if [[ $- == *i* ]] && [ -f "$HOME/.bashrc" ] ; then
+  source "$HOME/.bashrc"
+fi
