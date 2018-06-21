@@ -1,6 +1,15 @@
 use epm
 use re
 
+fn require [pkg]{
+  use epm
+  if (epm:is-installed $pkg) {
+    epm:upgrade $pkg
+  } else {
+    epm:install &silent-if-installed=$true $pkg
+  }
+}
+
 # utility functions
 fn null_out [f]{
   { $f 2>&- > /dev/null }
