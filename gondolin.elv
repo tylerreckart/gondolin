@@ -102,59 +102,53 @@ fn status {
   put (git status -s 2> /dev/null)
 }
 
-fn git-status {
+fn generate-status-string {
   index = (joins ' ' [(put (git status --porcelain -b 2> /dev/null))])
   status = ''
 
+  # use a regex to search for each possible status character combination in the git index
+  # if a match is found, append the appropriate status to the status string
   if (re:match '\?\?\s+' $index) {
-    status = '&git-prompt-untracked'$status
+    status = $status'git-prompt-untracked,'
   }
 
-  if (re:match 'A\s' $index) {
-    status = '&git-prompt-added'$status
-  } elif (re:match '\sM\s\s' $index) {
-    status = '&git-prompt-added'$status
+  if (or (re:match 'A\s' $index) (re:match '\sM\s\s' $index)) {
+    status = $status'git-prompt-added,'
   }
 
-  if (re:match '\sM\s\w' $index) {
-    status = '&git-prompt-modified'$status
-  } elif (re:match '\sMM\s' $index) {
-    status = '&git-prompt-modified'$status
-  } elif (re:match '\sAM\s' $index) {
-    status = '&git-prompt-modified'$status
-  } elif (re:match '\sT\s' $index) {
-    status = '&git-prompt-modified'$status
+  if (or (re:match '\sM\s' $index) (re:match '\sMM\s' $index) (re:match '\sAM\s' $index) (re:match '\sT\s' $index)) {
+    status = $status'git-prompt-modified,'
   }
 
   if (re:match '\sR\s' $index) {
-    status = '&git-prompt-renamed'$status
+    status = $status'git-prompt-renamed,'
   }
 
-  if (re:match '\sD\s' $index) {
-    status = '&git-prompt-deleted'$status
-  } elif (re:match '\sD\s\s' $index) {
-    status = '&git-prompt-deleted'$status
-  } elif (re:match '\sAD\s' $index) {
-    status = '&git-prompt-deleted'$status
+  if (or (re:match '\sD\s' $index) (re:match '\sD\s\s' $index) (re:match '\sAD\s' $index)) {
+    status = $status'git-prompt-deleted,'
   }
 
   if (re:match '\sUU\s' $index) {
-    status = '&git-prompt-unmerged'$status
+    status = $status'git-prompt-unmerged,'
   }
 
   if (re:match '##\s.*ahead' $index) {
-    status = '&git-prompt-ahead'$status
+    status = $status'git-prompt-ahead,'
   }
 
   if (re:match '##\s.*behind' $index) {
-    status = '&git-prompt-behind'$status
+    status = $status'git-prompt-behind,'
   }
 
   if (re:match '##\s.*diverged' $index) {
-    status = '&git-prompt-diverged'$status
+    status = $status'git-prompt-diverged,'
   }
 
-  last-status = [(drop 1 [(re:split '[&]' $status)])]
+  put (assoc [(re:split '[,]' $status)] -1 'empty')
+}
+
+fn git-status {
+  status = (generate-status-string)
 
   status-glyphs = [
     &git-prompt-untracked= '?'
@@ -166,11 +160,13 @@ fn git-status {
     &git-prompt-ahead=     '⇡'
     &git-prompt-behind=    '⇣'
     &git-prompt-diverged=  '⇕'
+    &empty=                ' '
   ]
 
-  for x $last-status {
+  for x $status {
     glyph = $status-glyphs[$x]
-
+    # use a regex to match each possible status
+    # if a match is found, output a colorized glyph to the readline
     if (re:match 'git-prompt-untracked' $x) {
       edit:styled ' '$glyph magenta
     }
@@ -196,7 +192,7 @@ fn git-status {
     }
 
     if (re:match 'git-prompt-ahead' $x) {
-      edit:styled ' '$glyph blue
+      edit:styled ' '$glyph lightblue
     }
 
     if (re:match 'git-prompt-behind' $x) {
