@@ -1,2 +1,4 @@
-### G O N D O L I N  
+### Gondolin 
 An opinionated [Elvish](https://elv.sh) config (WIP!)
+
+![](assets/gondolin_screenshot.png)
