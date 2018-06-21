@@ -1,24 +1,22 @@
 # Gondolin 
-An delightfully-opinionated framework for managing your [Elvish](https://elv.sh) configuration.
+An delightfully-opinionated [Elvish](https://elv.sh) configuration.
 
 Currently it shows:
-* Clever hostname and username displaying.
-* Prompt character turns red if the last command exits with non-zero code.
-* Current Git branch and rich repo status **(WIP)**:
+* Current working directory
+* Current Git branch and rich repo status in prompt readline. 
   * `?` — untracked changes;
   * `+` — uncommitted changes in the index;
   * `!` — unstaged changes;
   * `»` — renamed files;
   * `✘` — deleted files;
-  * `$` — stashed changes;
+  * `$` — stashed changes _**WIP**_;
   * `§` — unmerged changes;
   * `⇡` — ahead of remote branch;
   * `⇣` — behind of remote branch;
   * `⇕` — diverged changes.
 * Current Git SHA
-
-## Manifesto
-Gondolin aims to provide the core infrastructure to allow you to install packages which extend or modify the look of your shell. It will be fast, extensible and easy to use.
+* Colorized time since last commit
+* A red marker, `✗`, if last command exits with non-zero code.
 
 ## Installation
 ### Prerequisites 
@@ -37,6 +35,3 @@ epm:install github.com/tylerreckart/gondolin
 
 use github.com/tylerreckart/gondolin/gondolin
 ```
-
-## Contributing
-I'm far from an Elvish expert, and there are many ways that Gondolin can improve - if you have ideas on how to make the configuration easier to maintain (and faster), don't hesitate to file issues, fork, and send pull requests! 

@@ -1,5 +1,24 @@
+# ==============================================================================
+# Gondolin
+# ==============================================================================
+
 use epm
 use re
+
+# -----------------------------------------------------------------------------
+# Generate Aliases
+# -----------------------------------------------------------------------------
+
+# case-insensitive smart completion
+edit:-matcher[''] = [p]{ edit:match-prefix &smart-case $p }
+
+# -----------------------------------------------------------------------------
+# Utility Functions
+# -----------------------------------------------------------------------------
+
+fn even [int]{
+  put ($int % 2)
+}
 
 fn require [pkg]{
   use epm
@@ -10,18 +29,19 @@ fn require [pkg]{
   }
 }
 
-# utility functions
-fn null_out [f]{
-  { $f 2>&- > /dev/null }
-}
-
-fn has_failed [p]{
-  eq (bool ?(null_out $p)) $false
-}
-
 fn floor [x]{
   @r = (splits . $x)
   put $r[0]
+}
+
+fn map [f @rest]{
+  a = (optional_in $rest)
+
+  @res = (for x $a {
+    put ($f $x)
+  })
+
+  put $res
 }
 
 fn now {
@@ -40,27 +60,30 @@ fn optional_in [rest]{
   put $arr
 }
 
-fn map [f @rest]{
-  a = (optional_in $rest)
+# -----------------------------------------------------------------------------
+# Git Functions
+# -----------------------------------------------------------------------------
 
-  @res = (for x $a {
-    put ($f $x)
-  })
-
-  put $res
+# utility functions
+fn null_out [f]{
+  { $f 2>&- > /dev/null }
 }
 
-fn even [int]{
-  put ($int % 2)
+fn has_failed [p]{
+  eq (bool ?(null_out $p)) $false
 }
 
-# git functions
+# repo status functions
 fn branch {
   put (git rev-parse --abbrev-ref HEAD)
 }
 
 fn commit_id {
   put (git rev-parse HEAD)
+}
+
+fn generate-git-timestamp [a b]{
+  put (- $a $b)
 }
 
 fn is_dirty {
@@ -75,10 +98,6 @@ fn not-stale {
   put (git status -s 2> /dev/null)
 }
 
-fn generate-git-timestamp [a b]{
-  put (- $a $b)
-}
-
 fn status {
   put (git status -s 2> /dev/null)
 }
@@ -88,49 +107,51 @@ fn git-status {
   status = ''
 
   # untracked
-  if (echo (re:match '^\?\?\s+' $index)) {
+  if (re:match '\?\?\s+' $index) {
     status = '&git-prompt-untracked'$status
   }
   # added
-  if (echo (re:match '^A\s' $index)) {
+  if (re:match 'A\s' $index) {
     status = '&git-prompt-added'$status
-  } elif (echo (re:match '^M\s\s' $index)) {
+  } elif (re:match '\sM\s\s' $index) {
     status = '&git-prompt-added'$status
   }
   # modified
-  if (echo (re:match '^\sM\s' $index)) {
+  if (re:match '\sM\s\w' $index) {
     status = '&git-prompt-modified'$status
-  } elif (echo (re:match '^AM\s' $index)) {
+  } elif (re:match '\sMM\s' $index) {
     status = '&git-prompt-modified'$status
-  } elif (echo (re:match '^T\s' $index)) {
+  } elif (re:match '\sAM\s' $index) {
+    status = '&git-prompt-modified'$status
+  } elif (re:match '\sT\s' $index) {
     status = '&git-prompt-modified'$status
   }
   # renamed
-  if (echo (re:match '^R\s' $index)) {
+  if (re:match '\sR\s' $index) {
     status = '&git-prompt-renamed'$status
   }
   # deleted
-  if (echo (re:match '^\sD\s' $index)) {
+  if (re:match '\sD\s' $index) {
     status = '&git-prompt-deleted'$status
-  } elif (echo (re:match '\s^D\s\s' $index)) {
+  } elif (re:match '\sD\s\s' $index) {
     status = '&git-prompt-deleted'$status
-  } elif (echo (re:match '\s^AD\s' $index)) {
+  } elif (re:match '\sAD\s' $index) {
     status = '&git-prompt-deleted'$status
   }
   # unmerged
-  if (echo (re:match '^UU\s' $index)) {
+  if (re:match '\sUU\s' $index) {
     status = '&git-prompt-unmerged'$status
   }
   # ahead
-  if (echo (re:match '^##\s.*ahead' $index)) {
+  if (re:match '##\s.*ahead' $index) {
     status = '&git-prompt-ahead'$status
   }
   # behind
-  if (echo (re:match '^##\s.*behind' $index)) {
+  if (re:match '##\s.*behind' $index) {
     status = '&git-prompt-behind'$status
   }
   # diverged
-  if (echo (re:match '^##\s.*diverged' $index)) {
+  if (re:match '##\s.*diverged' $index) {
     status = '&git-prompt-diverged'$status
   }
 
@@ -147,8 +168,6 @@ fn git-status {
     &git-prompt-behind=    '⇣'
     &git-prompt-diverged=  '⇕'
   ]
-
-  results = []
 
   for x $last-status {
     glyph = $status-glyphs[$x]
@@ -186,7 +205,7 @@ fn git-status {
     }
 
     if (re:match 'git-prompt-diverged' $x) {
-      edit:styled $glyph yellow
+      edit:styled ' '$glyph yellow
     }
   }
 }
@@ -230,6 +249,10 @@ fn git-time-since-commit {
   }
 }
 
+# -----------------------------------------------------------------------------
+# Prompt Configuration
+# -----------------------------------------------------------------------------
+
 edit:prompt = {
   edit:styled (tilde-abbr $pwd) lightblue
 
@@ -238,18 +261,20 @@ edit:prompt = {
   if (not (has_failed { branch })) {
     edit:styled '⎇ ' green
     edit:styled (branch) green
-    put ' '
-    edit:styled (put (commit_id)[:8]) white
-    put ' '
-    put (git-time-since-commit)
 
-    current-status = (echo (git-status))
+    status-string = (echo (git-status))
 
-    if (> (count $current-status) 0) {
-      put ' ['
+    if (> (count $status-string) 0) {
       put (git-status)
-      put ']'
     }
+
+    put ' '
+
+    edit:styled (put (commit_id)[:8]) white
+
+    put ' '
+
+    put (git-time-since-commit)
   }
 
   put "\n"
@@ -258,6 +283,3 @@ edit:prompt = {
 }
 
 edit:rprompt = { }
-
-# case-insensitive smart completion
-edit:-matcher[''] = [p]{ edit:match-prefix &smart-case $p }
