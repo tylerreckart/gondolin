@@ -1,6 +1,0 @@
-[[ $- == *i* ]] || return  # Interactive shell
-
-if type elvish > /dev/null; then
-  exec elvish
-  exit $?
-fi
