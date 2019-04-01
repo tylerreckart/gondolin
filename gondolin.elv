@@ -5,6 +5,18 @@
 use epm
 use re
 
+# fn require [pkg]{
+#   if (epm:is-installed $pkg) {
+#     epm:upgrade $pkg
+#   } else {
+#     epm:install &silent-if-installed=$true $pkg
+#   }
+# }
+
+# require 'github.com/zzamboni/elvish-completions'
+
+# use github.com/zzamboni/elvish-completions/git
+
 # -----------------------------------------------------------------------------
 # Generate Aliases
 # -----------------------------------------------------------------------------
@@ -18,15 +30,6 @@ use re
 
 fn even [int]{
   put ($int % 2)
-}
-
-fn require [pkg]{
-  use epm
-  if (epm:is-installed $pkg) {
-    epm:upgrade $pkg
-  } else {
-    epm:install &silent-if-installed=$true $pkg
-  }
 }
 
 fn floor [x]{
@@ -102,21 +105,40 @@ fn status {
   put (git status -s 2> /dev/null)
 }
 
+git-index = (joins ' ' [(put (git status --porcelain -b 2> /dev/null))])
+
+fn has-git-index-updated {
+  current-index = (joins ' ' [(put (git status --porcelain -b 2> /dev/null))])
+
+  if (not (is $git-index $current-index)) {
+    put $true
+  } else {
+    put $false
+  }
+}
+
 fn generate-status-string {
-  index = (joins ' ' [(put (git status --porcelain -b 2> /dev/null))])
   status = ''
 
   # use a regex to search for each possible status character combination in the git index
   # if a match is found, append the appropriate status to the status string
-  if (re:match '\?\?\s+' $index) {
+  if (re:match '\?\?\s+' $git-index) {
     status = $status'git-prompt-untracked,'
   }
 
-  if (or (re:match 'A\s' $index) (re:match '\sM\s\s' $index)) {
+  a-1 = (re:match 'A\s' $git-index)
+  a-2 = (re:match '\sM\s\s' $git-index)
+
+  if (or $a-1 $a-2) {
     status = $status'git-prompt-added,'
   }
 
-  if (or (re:match '\sM\s' $index) (re:match '\sMM\s' $index) (re:match '\sAM\s' $index) (re:match '\sT\s' $index)) {
+  m-1 = (re:match '\sM\s' $git-index)
+  m-2 = (re:match '\sMM\s' $git-index)
+  m-3 = (re:match '\sAM\s' $git-index)
+  m-4 = (re:match '\sT\s' $git-index)
+
+  if (or $m-1 $m-2 $m-3 $m-4) {
     status = $status'git-prompt-modified,'
   }
 
@@ -124,7 +146,11 @@ fn generate-status-string {
     status = $status'git-prompt-renamed,'
   }
 
-  if (or (re:match '\sD\s' $index) (re:match '\sD\s\s' $index) (re:match '\sAD\s' $index)) {
+  d-1 = (re:match '\sD\s' $index)
+  d-2 = (re:match '\sD\s\s' $index)
+  d-3 = (re:match '\sAD\s' $index)
+
+  if (or $d-1 $d-2 $d-3) {
     status = $status'git-prompt-deleted,'
   }
 
