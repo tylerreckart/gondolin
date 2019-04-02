@@ -1,24 +1,26 @@
 # ==============================================================================
-# Gondolin
+# Gondolin Prompt Theme
+# Copyright (c) 2018-2019 Tyler Reckart <tyler.reckart@gmail.com>
+#
+# To use this theme, first install via epm:
+# use epm
+# epm:install github.com/tylerreckart/gondolin
+#
+# Then add the following line to your ~/.elvish/rc.elv file:
+# use github.com/tylerreckart/gondolin/gondolin
 # ==============================================================================
 
 use epm
 use re
 
-# fn require [pkg]{
-#   if (epm:is-installed $pkg) {
-#     epm:upgrade $pkg
-#   } else {
-#     epm:install &silent-if-installed=$true $pkg
-#   }
-# }
-
-# require 'github.com/zzamboni/elvish-completions'
-
-# use github.com/zzamboni/elvish-completions/git
-
 # -----------------------------------------------------------------------------
 # Generate Aliases
+# -----------------------------------------------------------------------------
+
+# [TODO] aliases go here
+
+# -----------------------------------------------------------------------------
+# Completion Utilities
 # -----------------------------------------------------------------------------
 
 # case-insensitive smart completion
@@ -142,31 +144,31 @@ fn generate-status-string {
     status = $status'git-prompt-modified,'
   }
 
-  if (re:match '\sR\s' $index) {
+  if (re:match '\sR\s' $git-index) {
     status = $status'git-prompt-renamed,'
   }
 
-  d-1 = (re:match '\sD\s' $index)
-  d-2 = (re:match '\sD\s\s' $index)
-  d-3 = (re:match '\sAD\s' $index)
+  d-1 = (re:match '\sD\s' $git-index)
+  d-2 = (re:match '\sD\s\s' $git-index)
+  d-3 = (re:match '\sAD\s' $git-index)
 
   if (or $d-1 $d-2 $d-3) {
     status = $status'git-prompt-deleted,'
   }
 
-  if (re:match '\sUU\s' $index) {
+  if (re:match '\sUU\s' $git-index) {
     status = $status'git-prompt-unmerged,'
   }
 
-  if (re:match '##\s.*ahead' $index) {
+  if (re:match '##\s.*ahead' $git-index) {
     status = $status'git-prompt-ahead,'
   }
 
-  if (re:match '##\s.*behind' $index) {
+  if (re:match '##\s.*behind' $git-index) {
     status = $status'git-prompt-behind,'
   }
 
-  if (re:match '##\s.*diverged' $index) {
+  if (re:match '##\s.*diverged' $git-index) {
     status = $status'git-prompt-diverged,'
   }
 
@@ -322,3 +324,9 @@ edit:prompt = {
 }
 
 edit:rprompt = { }
+# Set a max amount of time in seconds that the prompt will wait for
+# a the execution of the prompt. If the prompt takes longer than this
+# set amoutn of time, display it will display the last value of the
+# prompt with a stale marker (?). When the prompt finishes execution,
+# the marker will be removed and the prompt will be updated.
+edit:-prompts-max-wait = 0.05
